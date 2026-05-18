@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: veidra
+    runtime: node
+    plan: starter
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRIPLETEX_ENV
+        value: test
+      - key: TRIPLETEX_COMPANY_ID
+        value: "0"
+      - key: TRIPLETEX_CONSUMER_TOKEN
+        sync: false
+      - key: TRIPLETEX_EMPLOYEE_TOKEN
+        sync: false
+      - key: KVALITETSKONTROLL_API_TOKEN
+        sync: false

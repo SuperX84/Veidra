@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Veidra</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <div class="app-topbar">
+          <div class="topbar-left">
+            <a class="brand" href="#dashboard" aria-label="Veidra dashboard">
+              <span class="brand-mark" aria-hidden="true"></span>
+              <span class="brand-word">VEIDRA</span>
+            </a>
+            <nav class="nav horizontal-nav" aria-label="Dashboardai">
+              <button class="nav-item active" data-view="dashboard" data-dashboard-title="Dashboard 1">Dashboard 1</button>
+              <button class="nav-item" data-view="dashboard" data-dashboard-title="Dashboard 2">Dashboard 2</button>
+              <button class="nav-item" data-view="dashboard" data-dashboard-title="Dashboard 3">Dashboard 3</button>
+              <button class="nav-item" data-view="dashboard" data-dashboard-title="Dashboard 4">Dashboard 4</button>
+              <button class="nav-item" data-view="dashboard" data-dashboard-title="Dashboard 5">Dashboard 5</button>
+            </nav>
+          </div>
+          <div class="user-tools">
+            <div class="topbar-info">
+              <strong id="current-date">Tikrinama data</strong>
+              <small id="weather-forecast">Prognozė kraunama</small>
+            </div>
+            <button class="icon-button" aria-label="Pranešimai">◌<span>3</span></button>
+            <button class="icon-button" aria-label="Pagalba">?</button>
+            <div class="user-chip">
+              <span>AK</span>
+              <div>
+                <strong>Arūnas</strong>
+                <small>Admin</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <header class="topbar">
+          <div>
+            <h1 id="view-title">Sveiki, Arūnai!</h1>
+            <p>Štai jūsų projektų apžvalga</p>
+          </div>
+          <div class="top-actions">
+            <label class="search">
+              <input id="search" type="search" placeholder="Prosjekt, kunde, avvik..." />
+            </label>
+            <button class="primary-action" id="prepare-invoice">+ Naujas projektas</button>
+          </div>
+        </header>
+
+        <section class="login-panel" id="login-panel">
+          <div>
+            <p class="eyebrow">Innlogging</p>
+            <h2>Logg inn i Veidra</h2>
+            <p>Forste versjon bruker demo-data. Senere kobles dette til ekte brukere, roller og API-nokler.</p>
+          </div>
+          <form id="login-form">
+            <input type="email" value="daglig.leder@byggfirma.no" aria-label="E-post" />
+            <input type="password" value="demo1234" aria-label="Passord" />
+            <button type="submit">Apne dashboard</button>
+          </form>
+        </section>
+
+        <section class="content hidden" id="content">
+          <section class="metrics" id="metrics"></section>
+          <section class="layout-grid">
+            <article class="panel wide" id="main-panel"></article>
+            <article class="panel" id="action-panel"></article>
+          </section>
+          <section class="integration-summary" aria-label="Integracijos santrauka">
+            <h2>Integracijos santrauka</h2>
+            <div class="integration-summary-grid">
+              <article class="integration-card">
+                <span class="integration-icon tripletex">⌘</span>
+                <div>
+                  <strong>Tripletex</strong>
+                  <p id="tripletex-summary-copy">Tikrinamas test API ryšys</p>
+                </div>
+                <small id="tripletex-summary-state"><i></i> Tikrinama</small>
+              </article>
+              <article class="integration-card">
+                <span class="integration-icon kk">✓</span>
+                <div>
+                  <strong>Kvalitetskontroll</strong>
+                  <p id="kk-summary-copy">Tikrinamas snapshot statusas</p>
+                </div>
+                <small class="muted" id="kk-summary-state"><i></i> Tikrinama</small>
+              </article>
+              <article class="integration-card status-connected">
+                <span class="integration-icon smartkalk">▦</span>
+                <div>
+                  <strong>SmartKalk</strong>
+                  <p>Paskutinis importas<br />Prieš 1 d.</p>
+                </div>
+                <button type="button">Importuoti dabar</button>
+              </article>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="src/app.js" type="module"></script>
+  </body>
+</html>
