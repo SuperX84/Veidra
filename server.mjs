@@ -243,11 +243,11 @@ function mapProjectEconomy(orders) {
 }
 
 function getTripletexConfig() {
-  const environment = (process.env.TRIPLETEX_ENV || 'test').toLowerCase();
-  const baseUrl = (process.env.TRIPLETEX_BASE_URL || tripletexBaseUrls[environment] || tripletexBaseUrls.test).replace(/\/$/, '');
-  const consumerToken = process.env.TRIPLETEX_CONSUMER_TOKEN || '';
-  const employeeToken = process.env.TRIPLETEX_EMPLOYEE_TOKEN || '';
-  const companyId = process.env.TRIPLETEX_COMPANY_ID || '0';
+  const environment = (process.env.TRIPLETEX_ENV || 'test').trim().toLowerCase();
+  const baseUrl = (process.env.TRIPLETEX_BASE_URL || tripletexBaseUrls[environment] || tripletexBaseUrls.test).trim().replace(/\/$/, '');
+  const consumerToken = (process.env.TRIPLETEX_CONSUMER_TOKEN || '').trim();
+  const employeeToken = (process.env.TRIPLETEX_EMPLOYEE_TOKEN || '').trim();
+  const companyId = (process.env.TRIPLETEX_COMPANY_ID || '0').trim();
 
   return {
     environment,
@@ -492,7 +492,13 @@ async function readTripletexResponse(response) {
   const data = text ? JSON.parse(text) : {};
 
   if (!response.ok) {
-    const message = data.message || data.error || `Tripletex request failed with ${response.status}`;
+    const validation = Array.isArray(data.validationMessages)
+      ? data.validationMessages.map((item) => item.message || item.field || JSON.stringify(item)).join('; ')
+      : '';
+    const details = [data.message, data.developerMessage, validation]
+      .filter(Boolean)
+      .join(' ');
+    const message = details || data.error || `Tripletex request failed with ${response.status}`;
     throw new Error(message);
   }
 
