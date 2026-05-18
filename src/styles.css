@@ -264,7 +264,7 @@ button {
 }
 
 .topbar-info strong,
-.topbar-info small {
+.topbar-info a {
   display: block;
   white-space: nowrap;
 }
@@ -274,9 +274,56 @@ button {
   font-weight: 800;
 }
 
-.topbar-info small {
+.topbar-info a {
   color: var(--muted);
   font-size: 12px;
+  text-decoration: none;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #f4f7f5;
+}
+
+.topbar-info a:hover {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.topbar-info a[data-weather-tone="sun"] {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.topbar-info a[data-weather-tone="cloud"] {
+  border-color: #d9e2dd;
+  background: #f4f7f5;
+  color: #42534c;
+}
+
+.topbar-info a[data-weather-tone="rain"] {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.topbar-info a[data-weather-tone="snow"] {
+  border-color: #dbeafe;
+  background: #f8fbff;
+  color: #334155;
+}
+
+.topbar-info a[data-weather-tone="fog"],
+.topbar-info a[data-weather-tone="muted"] {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+  color: #4b5563;
+}
+
+.topbar-info a[data-weather-tone="warning"] {
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #7c2d12;
 }
 
 .user-chip {

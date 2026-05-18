@@ -470,10 +470,12 @@ async function loadWeatherForecast() {
     const max = Math.round(data.maxTemperature);
     const min = Math.round(data.minTemperature);
     weatherForecast.href = yrLocationUrl(position);
+    weatherForecast.dataset.weatherTone = data.warnings?.length ? 'warning' : data.tone || 'cloud';
     weatherForecast.textContent = Number.isFinite(temp)
-      ? `${position.label} ${temp}°C · ${data.summary || 'Yr'} · ${min}/${max}°C`
+      ? `${data.warnings?.length ? '⚠ ' : ''}${position.label} ${temp}°C · ${data.summary || 'Yr'} · ${min}/${max}°C`
       : 'Værvarsel ikke tilgjengelig';
   } catch {
+    weatherForecast.dataset.weatherTone = 'muted';
     weatherForecast.textContent = 'Værvarsel ikke tilgjengelig';
   }
 }

@@ -90,27 +90,51 @@ async function weatherForecast(res, url) {
   }
 
   try {
-    const forecastUrl = new URL('https://api.met.no/weatherapi/locationforecast/2.0/compact');
-    forecastUrl.searchParams.set('lat', latitude.toFixed(4));
-    forecastUrl.searchParams.set('lon', longitude.toFixed(4));
-    const response = await fetch(forecastUrl, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Veidra/0.1 https://veidra.app'
-      }
+    const data = await fetchMetJson('https://api.met.no/weatherapi/locationforecast/2.0/compact', {
+      lat: latitude.toFixed(4),
+      lon: longitude.toFixed(4)
     });
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
+    const warnings = await fetchMetWarnings(latitude, longitude);
 
-    if (!response.ok) {
-      sendJson(res, response.status, { ok: false, message: data.error?.message || data.message || `MET Norway svarte ${response.status}` });
-      return;
-    }
-
-    const forecast = mapMetForecast(data);
+    const forecast = { ...mapMetForecast(data), warnings };
     sendJson(res, 200, { ok: true, source: 'MET Norway / Yr', ...forecast });
   } catch (error) {
     sendJson(res, 502, { ok: false, message: error.message });
+  }
+}
+
+async function fetchMetJson(baseUrl, query) {
+  const url = new URL(baseUrl);
+  Object.entries(query).forEach(([key, value]) => url.searchParams.set(key, value));
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'Veidra/0.1 https://veidra.app'
+    }
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || data.message || `MET Norway svarte ${response.status}`);
+  }
+
+  return data;
+}
+
+async function fetchMetWarnings(latitude, longitude) {
+  try {
+    const data = await fetchMetJson('https://api.met.no/weatherapi/metalerts/2.0/current.json', {
+      lat: latitude.toFixed(4),
+      lon: longitude.toFixed(4)
+    });
+    return (data.features || []).slice(0, 3).map((feature) => ({
+      event: feature.properties?.event || 'Farevarsel',
+      awarenessLevel: feature.properties?.awareness_level || '',
+      severity: feature.properties?.severity || ''
+    }));
+  } catch {
+    return [];
   }
 }
 
@@ -130,9 +154,20 @@ function mapMetForecast(data) {
     minTemperature: todayTemps.length ? Math.min(...todayTemps) : current.air_temperature,
     maxTemperature: todayTemps.length ? Math.max(...todayTemps) : current.air_temperature,
     symbol,
+    tone: weatherTone(symbol),
     summary: weatherSymbolLabel(symbol),
     updatedAt: data.properties?.meta?.updated_at || null
   };
+}
+
+function weatherTone(symbol) {
+  const value = String(symbol || '').replace(/_(day|night|polartwilight)$/i, '');
+  if (value.includes('clearsky') || value.includes('fair')) return 'sun';
+  if (value.includes('rain') || value.includes('sleet')) return 'rain';
+  if (value.includes('snow')) return 'snow';
+  if (value.includes('fog')) return 'fog';
+  if (value.includes('thunder')) return 'warning';
+  return 'cloud';
 }
 
 function weatherSymbolLabel(symbol) {
