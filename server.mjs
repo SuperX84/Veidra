@@ -47,6 +47,11 @@ createServer(async (req, res) => {
       return;
     }
 
+    if (url.pathname === '/api/weather') {
+      await weatherForecast(res, url);
+      return;
+    }
+
     if (url.pathname.startsWith('/api/tripletex')) {
       await handleTripletexApi(req, res, url);
       return;
@@ -75,6 +80,74 @@ createServer(async (req, res) => {
 }).listen(port, () => {
   console.log(`Veidra is running at http://localhost:${port}`);
 });
+
+async function weatherForecast(res, url) {
+  const latitude = Number(url.searchParams.get('lat'));
+  const longitude = Number(url.searchParams.get('lon'));
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    sendJson(res, 400, { ok: false, message: 'Missing lat/lon' });
+    return;
+  }
+
+  try {
+    const forecastUrl = new URL('https://api.met.no/weatherapi/locationforecast/2.0/compact');
+    forecastUrl.searchParams.set('lat', latitude.toFixed(4));
+    forecastUrl.searchParams.set('lon', longitude.toFixed(4));
+    const response = await fetch(forecastUrl, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Veidra/0.1 https://veidra.app'
+      }
+    });
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      sendJson(res, response.status, { ok: false, message: data.error?.message || data.message || `MET Norway svarte ${response.status}` });
+      return;
+    }
+
+    const forecast = mapMetForecast(data);
+    sendJson(res, 200, { ok: true, source: 'MET Norway / Yr', ...forecast });
+  } catch (error) {
+    sendJson(res, 502, { ok: false, message: error.message });
+  }
+}
+
+function mapMetForecast(data) {
+  const series = data.properties?.timeseries || [];
+  const current = series[0]?.data?.instant?.details || {};
+  const next = series.find((item) => item.data?.next_1_hours || item.data?.next_6_hours)?.data || {};
+  const symbol = next.next_1_hours?.summary?.symbol_code || next.next_6_hours?.summary?.symbol_code || 'unknown';
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTemps = series
+    .filter((item) => String(item.time || '').startsWith(today))
+    .map((item) => item.data?.instant?.details?.air_temperature)
+    .filter(Number.isFinite);
+
+  return {
+    temperature: current.air_temperature,
+    minTemperature: todayTemps.length ? Math.min(...todayTemps) : current.air_temperature,
+    maxTemperature: todayTemps.length ? Math.max(...todayTemps) : current.air_temperature,
+    symbol,
+    summary: weatherSymbolLabel(symbol),
+    updatedAt: data.properties?.meta?.updated_at || null
+  };
+}
+
+function weatherSymbolLabel(symbol) {
+  const value = String(symbol || '').replace(/_(day|night|polartwilight)$/i, '');
+  if (value.includes('clearsky')) return 'giedra';
+  if (value.includes('fair')) return 'mažai debesuota';
+  if (value.includes('partlycloudy')) return 'debesuota';
+  if (value.includes('cloudy')) return 'debesuota';
+  if (value.includes('fog')) return 'rūkas';
+  if (value.includes('sleet')) return 'šlapdriba';
+  if (value.includes('snow')) return 'sniegas';
+  if (value.includes('rain')) return 'lietus';
+  if (value.includes('thunder')) return 'audra';
+  return 'prognozė';
+}
 
 async function handleTripletexApi(req, res, url) {
   if (req.method !== 'GET') {
