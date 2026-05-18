@@ -439,13 +439,13 @@ function filterProjects() {
 function updateTopbarDate() {
   if (!currentDate) return;
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const formatted = new Intl.DateTimeFormat('lt-LT', {
+  const formatted = new Intl.DateTimeFormat('nb-NO', {
     timeZone,
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   }).format(new Date());
-  currentDate.textContent = `${formatted.charAt(0).toUpperCase() + formatted.slice(1)} · ${isoWeekNumber(new Date())} sav.`;
+  currentDate.textContent = `${formatted.charAt(0).toUpperCase() + formatted.slice(1)} · uke ${isoWeekNumber(new Date())}`;
 }
 
 function isoWeekNumber(value) {
@@ -472,9 +472,9 @@ async function loadWeatherForecast() {
     weatherForecast.href = yrLocationUrl(position);
     weatherForecast.textContent = Number.isFinite(temp)
       ? `${position.label} ${temp}°C · ${data.summary || 'Yr'} · ${min}/${max}°C`
-      : 'Prognozė nepasiekiama';
+      : 'Værvarsel ikke tilgjengelig';
   } catch {
-    weatherForecast.textContent = 'Prognozė nepasiekiama';
+    weatherForecast.textContent = 'Værvarsel ikke tilgjengelig';
   }
 }
 
@@ -511,7 +511,7 @@ async function getLocalWeatherPosition() {
 function fallbackWeatherPosition() {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
   if (timeZone.includes('Oslo')) return { latitude: 59.9139, longitude: 10.7522, label: 'Oslo' };
-  return { latitude: 59.9139, longitude: 10.7522, label: 'Vieta' };
+  return { latitude: 59.9139, longitude: 10.7522, label: 'Sted' };
 }
 
 async function localPlaceLabel(latitude, longitude) {
@@ -525,9 +525,9 @@ async function localPlaceLabel(latitude, longitude) {
     });
     const response = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?${params}`);
     const data = await response.json();
-    return data.results?.[0]?.name || 'Vieta';
+    return data.results?.[0]?.name || 'Sted';
   } catch {
-    return 'Vieta';
+    return 'Sted';
   }
 }
 

@@ -137,16 +137,16 @@ function mapMetForecast(data) {
 
 function weatherSymbolLabel(symbol) {
   const value = String(symbol || '').replace(/_(day|night|polartwilight)$/i, '');
-  if (value.includes('clearsky')) return 'giedra';
-  if (value.includes('fair')) return 'mažai debesuota';
-  if (value.includes('partlycloudy')) return 'debesuota';
-  if (value.includes('cloudy')) return 'debesuota';
-  if (value.includes('fog')) return 'rūkas';
-  if (value.includes('sleet')) return 'šlapdriba';
-  if (value.includes('snow')) return 'sniegas';
-  if (value.includes('rain')) return 'lietus';
-  if (value.includes('thunder')) return 'audra';
-  return 'prognozė';
+  if (value.includes('clearsky')) return 'klart';
+  if (value.includes('fair')) return 'lettskyet';
+  if (value.includes('partlycloudy')) return 'delvis skyet';
+  if (value.includes('cloudy')) return 'skyet';
+  if (value.includes('fog')) return 'tåke';
+  if (value.includes('sleet')) return 'sludd';
+  if (value.includes('snow')) return 'snø';
+  if (value.includes('rain')) return 'regn';
+  if (value.includes('thunder')) return 'torden';
+  return 'varsel';
 }
 
 async function handleTripletexApi(req, res, url) {
