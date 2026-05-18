@@ -438,41 +438,97 @@ function filterProjects() {
 
 function updateTopbarDate() {
   if (!currentDate) return;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const formatted = new Intl.DateTimeFormat('lt-LT', {
-    timeZone: 'Europe/Oslo',
+    timeZone,
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   }).format(new Date());
-  currentDate.textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  currentDate.textContent = `${formatted.charAt(0).toUpperCase() + formatted.slice(1)} · ${isoWeekNumber(new Date())} sav.`;
+}
+
+function isoWeekNumber(value) {
+  const date = new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
 }
 
 async function loadWeatherForecast() {
   if (!weatherForecast) return;
+  const position = await getLocalWeatherPosition();
   try {
-    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=59.9139&longitude=10.7522&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FOslo&forecast_days=1');
+    const params = new URLSearchParams({
+      lat: String(position.latitude),
+      lon: String(position.longitude)
+    });
+    const response = await fetch(`/api/weather?${params}`, { headers: { Accept: 'application/json' } });
     const data = await response.json();
-    const temp = Math.round(data.current?.temperature_2m);
-    const max = Math.round(data.daily?.temperature_2m_max?.[0]);
-    const min = Math.round(data.daily?.temperature_2m_min?.[0]);
-    const summary = weatherCodeLabel(data.current?.weather_code);
+    const temp = Math.round(data.temperature);
+    const max = Math.round(data.maxTemperature);
+    const min = Math.round(data.minTemperature);
+    weatherForecast.href = yrLocationUrl(position);
     weatherForecast.textContent = Number.isFinite(temp)
-      ? `Oslo ${temp}°C · ${summary} · ${min}/${max}°C`
+      ? `${position.label} ${temp}°C · ${data.summary || 'Yr'} · ${min}/${max}°C`
       : 'Prognozė nepasiekiama';
   } catch {
     weatherForecast.textContent = 'Prognozė nepasiekiama';
   }
 }
 
-function weatherCodeLabel(code) {
-  if ([0].includes(code)) return 'giedra';
-  if ([1, 2, 3].includes(code)) return 'debesuota';
-  if ([45, 48].includes(code)) return 'rūkas';
-  if ([51, 53, 55, 56, 57].includes(code)) return 'dulksna';
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'lietus';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'sniegas';
-  if ([95, 96, 99].includes(code)) return 'audra';
-  return 'prognozė';
+function yrLocationUrl(position) {
+  const lat = Number(position.latitude).toFixed(4);
+  const lon = Number(position.longitude).toFixed(4);
+  return `https://www.yr.no/nb/v%C3%A6rvarsel/daglig-tabell/${lat},${lon}`;
+}
+
+async function getLocalWeatherPosition() {
+  const fallback = fallbackWeatherPosition();
+  if (!navigator.geolocation) return fallback;
+
+  try {
+    const position = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: false,
+        timeout: 6000,
+        maximumAge: 1000 * 60 * 60 * 6
+      });
+    });
+    const latitude = Number(position.coords.latitude.toFixed(4));
+    const longitude = Number(position.coords.longitude.toFixed(4));
+    return {
+      latitude,
+      longitude,
+      label: await localPlaceLabel(latitude, longitude)
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function fallbackWeatherPosition() {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  if (timeZone.includes('Oslo')) return { latitude: 59.9139, longitude: 10.7522, label: 'Oslo' };
+  return { latitude: 59.9139, longitude: 10.7522, label: 'Vieta' };
+}
+
+async function localPlaceLabel(latitude, longitude) {
+  try {
+    const params = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      language: 'no',
+      count: '1',
+      format: 'json'
+    });
+    const response = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?${params}`);
+    const data = await response.json();
+    return data.results?.[0]?.name || 'Vieta';
+  } catch {
+    return 'Vieta';
+  }
 }
 
 function renderMetrics(list) {
